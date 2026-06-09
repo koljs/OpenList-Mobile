@@ -4,6 +4,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/OpenListTeam/OpenList/v4/drivers"
 	"github.com/OpenListTeam/OpenList/v4/internal/bootstrap"
 	"github.com/OpenListTeam/OpenList/v4/internal/db"
 	"github.com/OpenListTeam/OpenList/v4/openlistlib/internal"
@@ -26,6 +27,9 @@ var shutdownHookUuid = ""
 var logFormatter *internal.MyFormatter
 
 func Init(event Event, cb LogCallback) error {
+	// Register all drivers (side-effect import ensures they're compiled in)
+	drivers.All()
+
 	if startFailedHookUuid != "" {
 		bootstrap.RemoveEndpointStartFailedHook(startFailedHookUuid)
 		startFailedHookUuid = ""
