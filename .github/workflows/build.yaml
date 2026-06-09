@@ -52,7 +52,7 @@ jobs:
           cd $GITHUB_WORKSPACE/openlist-lib/scripts
           
           # Re-fetch the tag information from remote (since .git was removed by init_openlist.sh)
-          GIT_REPO="https://github.com/OpenListTeam/OpenList.git"
+          GIT_REPO="https://github.com/koljs/OpenList.git"
           OPENLIST_VERSION=$(git -c 'versionsort.suffix=-' ls-remote --exit-code --refs --sort='version:refname' --tags $GIT_REPO | tail -n 1 | cut -d'/' -f3)
           
           # Get the commit hash for this tag from remote

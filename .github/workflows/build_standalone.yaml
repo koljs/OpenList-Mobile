@@ -47,7 +47,7 @@ jobs:
         run: |
           cd $GITHUB_WORKSPACE/openlist-lib/scripts
           
-          GIT_REPO="https://github.com/OpenListTeam/OpenList.git"
+          GIT_REPO="https://github.com/koljs/OpenList.git"
           OPENLIST_VERSION=$(git -c 'versionsort.suffix=-' ls-remote --exit-code --refs --sort='version:refname' --tags $GIT_REPO | tail -n 1 | cut -d'/' -f3)
           OPENLIST_GIT_COMMIT=$(git ls-remote $GIT_REPO "refs/tags/${OPENLIST_VERSION}" | cut -f1 | cut -c1-7)
           OPENLIST_WEB_VERSION=$(curl -fsSL --max-time 10 "https://api.github.com/repos/OpenListTeam/OpenList-Frontend/releases/latest" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/"//g;s/,//g;s/ //g' || echo "rolling")
