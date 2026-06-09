@@ -90,6 +90,15 @@ jobs:
           check_artifacts: true
           search_artifacts: true
 
+      - name: Setup JDK 11 for keystore conversion
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 11
+
+      - name: Save JDK 11 path
+        run: echo "JDK11_HOME=$JAVA_HOME" >> $GITHUB_ENV
+
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -107,8 +116,8 @@ jobs:
           # Decode the keystore from secrets
           echo ${{ secrets.KEY_STORE }} | base64 --decode > $GITHUB_WORKSPACE/android/app/key.jks
           
-          # Convert JKS to PKCS12 format for JDK 17+ compatibility
-          if keytool -importkeystore \
+          # Use JDK 11's keytool to convert JKS to PKCS12 (JDK 17 can't read old JKS format)
+          $JDK11_HOME/bin/keytool -importkeystore \
             -srckeystore $GITHUB_WORKSPACE/android/app/key.jks \
             -destkeystore $GITHUB_WORKSPACE/android/app/key.p12 \
             -deststoretype PKCS12 \
@@ -117,17 +126,12 @@ jobs:
             -srcalias '${{ secrets.ALIAS_NAME }}' \
             -destalias '${{ secrets.ALIAS_NAME }}' \
             -srckeypass '${{ secrets.ALIAS_PASSWORD }}' \
-            -destkeypass '${{ secrets.ALIAS_PASSWORD }}'; then
-            echo "Successfully converted JKS to PKCS12"
-            echo KEY_PATH='./key.p12' >> local.properties
-          else
-            echo "JKS conversion failed, using JKS format directly"
-            echo KEY_PATH='./key.jks' >> local.properties
-          fi
+            -destkeypass '${{ secrets.ALIAS_PASSWORD }}'
           
           echo ALIAS_NAME='${{ secrets.ALIAS_NAME }}' >> local.properties
           echo ALIAS_PASSWORD='${{ secrets.ALIAS_PASSWORD }}' >> local.properties
           echo KEY_PASSWORD='${{ secrets.KEY_PASSWORD }}' >> local.properties
+          echo KEY_PATH='./key.p12' >> local.properties
 
       - uses: subosito/flutter-action@v2
         with:
