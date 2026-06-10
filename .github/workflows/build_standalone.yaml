@@ -10,7 +10,8 @@ on:
       - "release.yaml"
   pull_request:
     branches: ["main"]
-
+  schedule:
+    - cron: "0 6 * * *" # 每天 UTC 6:00 (北京时间 14:00) 自动构建
   workflow_dispatch:
 
 jobs:
