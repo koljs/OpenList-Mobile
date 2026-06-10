@@ -1,6 +1,6 @@
 #!/bin/bash
 
-GIT_REPO="https://github.com/OpenListTeam/OpenList.git"
+GIT_REPO="https://github.com/koljs/OpenList.git"
 
 function compare_versions() {
   local v1="${1#v}"

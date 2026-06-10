@@ -1,12 +1,12 @@
 #!/bin/bash
 
-GIT_REPO="https://github.com/OpenListTeam/OpenList.git"
-TAG_NAME=$(git -c 'versionsort.suffix=-' ls-remote --exit-code --refs --sort='version:refname' --tags $GIT_REPO | tail -n 1 | cut -d'/' -f3)
+GIT_REPO="https://github.com/koljs/OpenList.git"
+BRANCH="main"
 
-echo "OpenList - ${TAG_NAME}"
+echo "OpenList - branch ${BRANCH}"
 rm -rf ./src
 unset GIT_WORK_TREE
-git clone --branch "$TAG_NAME" https://github.com/OpenListTeam/OpenList.git ./src
+git clone --branch "$BRANCH" --depth 1 https://github.com/koljs/OpenList.git ./src
 rm -rf ./src/.git
 
 echo "Checking cloned source structure:"

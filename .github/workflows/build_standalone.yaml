@@ -47,9 +47,9 @@ jobs:
         run: |
           cd $GITHUB_WORKSPACE/openlist-lib/scripts
           
-          GIT_REPO="https://github.com/OpenListTeam/OpenList.git"
-          OPENLIST_VERSION=$(git -c 'versionsort.suffix=-' ls-remote --exit-code --refs --sort='version:refname' --tags $GIT_REPO | tail -n 1 | cut -d'/' -f3)
-          OPENLIST_GIT_COMMIT=$(git ls-remote $GIT_REPO "refs/tags/${OPENLIST_VERSION}" | cut -f1 | cut -c1-7)
+          GIT_REPO="https://github.com/koljs/OpenList.git"
+          OPENLIST_VERSION=$(git -c 'versionsort.suffix=-' ls-remote --exit-code --refs --sort='version:refname' --tags $GIT_REPO | tail -n 1 | cut -d'/' -f3 || echo "main")
+          OPENLIST_GIT_COMMIT=$(git ls-remote $GIT_REPO "refs/heads/main" | cut -f1 | cut -c1-7)
           OPENLIST_WEB_VERSION=$(curl -fsSL --max-time 10 "https://api.github.com/repos/OpenListTeam/OpenList-Frontend/releases/latest" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/"//g;s/,//g;s/ //g' || echo "rolling")
           OPENLIST_BUILT_AT=$(date +'%F %T %z')
           
@@ -82,6 +82,14 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: 1.25.0
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 11
+
+      - name: Save JDK 11 path
+        run: echo "JDK11_HOME=$JAVA_HOME" >> $GITHUB_ENV
 
       - uses: actions/setup-java@v4
         with:
@@ -121,9 +129,8 @@ jobs:
           # Decode the keystore from secrets
           echo ${{ secrets.KEY_STORE }} | base64 --decode > $GITHUB_WORKSPACE/android/app/key.jks
           
-          # Convert JKS to PKCS12 format for JDK 17+ compatibility
-          # This fixes the "keystore contains extension fields that exceed the limit" error
-          keytool -importkeystore \
+          # Use JDK 11's keytool to convert JKS to PKCS12 (JDK 17 can't read old JKS format)
+          $JDK11_HOME/bin/keytool -importkeystore \
             -srckeystore $GITHUB_WORKSPACE/android/app/key.jks \
             -destkeystore $GITHUB_WORKSPACE/android/app/key.p12 \
             -deststoretype PKCS12 \
@@ -132,14 +139,9 @@ jobs:
             -srcalias '${{ secrets.ALIAS_NAME }}' \
             -destalias '${{ secrets.ALIAS_NAME }}' \
             -srckeypass '${{ secrets.ALIAS_PASSWORD }}' \
-            -destkeypass '${{ secrets.ALIAS_PASSWORD }}' \
-            || {
-              # If conversion fails, try using the original JKS with special handling
-              echo "JKS conversion failed, using original format with workaround"
-              cp $GITHUB_WORKSPACE/android/app/key.jks $GITHUB_WORKSPACE/android/app/key.p12
-            }
-          
-          # Write properties using PKCS12 format
+            -destkeypass '${{ secrets.ALIAS_PASSWORD }}'
+
+          # Write properties
           echo ALIAS_NAME='${{ secrets.ALIAS_NAME }}' >> local.properties
           echo ALIAS_PASSWORD='${{ secrets.ALIAS_PASSWORD }}' >> local.properties
           echo KEY_PASSWORD='${{ secrets.KEY_PASSWORD }}' >> local.properties
